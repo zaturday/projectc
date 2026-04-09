@@ -78,6 +78,12 @@ variable "netmask" {
   default     = "255.255.255.0"
 }
 
+variable "netmask_cidr" {
+  description = "Network mask in CIDR notation (e.g., 24 for 255.255.255.0)"
+  type        = number
+  default     = 24
+}
+
 variable "dns_servers" {
   description = "DNS servers"
   type        = list(string)
@@ -141,7 +147,7 @@ resource "vsphere_virtual_machine" "vm" {
 
       network_interface {
         ipv4_address = var.ip_address
-        ipv4_netmask = 24
+        ipv4_netmask = var.netmask_cidr
       }
 
       ipv4_gateway    = var.gateway

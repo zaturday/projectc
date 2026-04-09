@@ -20,9 +20,9 @@ variable "vsphere_server" {
 }
 
 variable "vsphere_allow_unverified_ssl" {
-  description = "Allow unverified SSL certificates"
+  description = "Allow unverified SSL certificates (set to false and configure CA cert for production)"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "vsphere_datacenter" {
@@ -111,6 +111,12 @@ variable "netmask" {
   description = "Network mask (e.g., 255.255.255.0)"
   type        = string
   default     = "255.255.255.0"
+}
+
+variable "netmask_cidr" {
+  description = "Network mask in CIDR notation (e.g., 24 for 255.255.255.0)"
+  type        = number
+  default     = 24
 }
 
 variable "dns_servers" {

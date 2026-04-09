@@ -90,10 +90,11 @@ module "control_plane" {
   datacenter_id  = data.vsphere_datacenter.dc.id
   cluster_id     = data.vsphere_compute_cluster.cluster.id
 
-  ip_address = var.control_plane_ips[count.index]
-  gateway    = var.gateway
-  netmask    = var.netmask
-  dns_servers = var.dns_servers
+  ip_address     = var.control_plane_ips[count.index]
+  gateway        = var.gateway
+  netmask        = var.netmask
+  netmask_cidr   = var.netmask_cidr
+  dns_servers    = var.dns_servers
 
   cloudinit_config = templatefile("${path.module}/templates/cloudinit-controlplane.yaml", {
     hostname        = "${var.cluster_name}-cp-${count.index + 1}"
@@ -127,10 +128,11 @@ module "workers" {
   datacenter_id  = data.vsphere_datacenter.dc.id
   cluster_id     = data.vsphere_compute_cluster.cluster.id
 
-  ip_address = var.worker_ips[count.index]
-  gateway    = var.gateway
-  netmask    = var.netmask
-  dns_servers = var.dns_servers
+  ip_address     = var.worker_ips[count.index]
+  gateway        = var.gateway
+  netmask        = var.netmask
+  netmask_cidr   = var.netmask_cidr
+  dns_servers    = var.dns_servers
 
   cloudinit_config = templatefile("${path.module}/templates/cloudinit-worker.yaml", {
     hostname        = "${var.cluster_name}-worker-${count.index + 1}"
