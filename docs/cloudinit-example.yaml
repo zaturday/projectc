@@ -1,0 +1,48 @@
+# =============================================================================
+# Sample cloud-init Configuration for Testing VM Template
+# =============================================================================
+# Use this to test your template before deploying with Terraform
+# In vSphere, set these VM Options → Advanced → Edit Configuration:
+#   guestinfo.userdata = (paste this entire file content)
+#   guestinfo.userdata.encoding = text
+# =============================================================================
+
+#cloud-config
+hostname: k8s-test-node
+fqdn: k8s-test-node.cluster.local
+
+# Create ubuntu user with SSH key
+users:
+  - name: ubuntu
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ssh-rsa AAAA_YOUR_PUBLIC_KEY_HERE_REPLACE_THIS_ ubuntu@template
+    lock_passwd: true
+
+# Install packages
+packages:
+  - vim
+  - curl
+  - wget
+  - git
+  - htop
+  - net-tools
+
+# Write a test file
+write_files:
+  - path: /home/ubuntu/test-cloudinit.txt
+    content: |
+      Cloud-init successfully executed!
+      This VM is ready for Kubernetes deployment.
+    permissions: "0644"
+    owner: ubuntu:ubuntu
+
+# Run commands on first boot
+runcmd:
+  - echo "Cloud-init completed at $(date)" >> /var/log/cloud-init-complete.log
+  - echo "Hostname is $(hostname)" >> /home/ubuntu/test-cloudinit.txt
+  - chown ubuntu:ubuntu /home/ubuntu/test-cloudinit.txt
+
+# Final message
+final_message: "Cloud-init complete! VM is ready."
