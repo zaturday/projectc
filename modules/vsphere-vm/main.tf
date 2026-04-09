@@ -177,22 +177,3 @@ data "vsphere_virtual_machine" "template" {
   name          = var.vm_template
   datacenter_id = var.datacenter_id
 }
-
-# -----------------------------------------------------------------------------
-# Outputs
-# -----------------------------------------------------------------------------
-output "vm_id" {
-  value = vsphere_virtual_machine.vm[*].id
-}
-
-output "vm_name" {
-  value = vsphere_virtual_machine.vm[*].name
-}
-
-output "vm_ip_address" {
-  value = vsphere_virtual_machine.vm[*].default_ip_address
-}
-
-output "vm_moid" {
-  value = vsphere_virtual_machine.vm[*].moid
-}
