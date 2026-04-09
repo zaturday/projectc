@@ -1,0 +1,54 @@
+# =============================================================================
+# Terraform Variables Configuration
+# Copy this file to terraform.tfvars and fill in your values
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# vSphere Connection
+# -----------------------------------------------------------------------------
+vsphere_user     = "administrator@vsphere.local"
+vsphere_password = "your-password-here"
+vsphere_server   = "vcenter.your-domain.local"
+
+vsphere_datacenter = "Datacenter"
+vsphere_datastore  = "datastore1"
+vsphere_cluster    = "Cluster"
+vsphere_network    = "VM Network"
+
+# -----------------------------------------------------------------------------
+# Cluster Configuration
+# -----------------------------------------------------------------------------
+cluster_name = "k8s-prod"
+
+control_plane_count = 3  # Recommended: 3 for HA
+worker_count        = 2
+
+# -----------------------------------------------------------------------------
+# Network Configuration - Update these for your environment
+# -----------------------------------------------------------------------------
+control_plane_ips = [
+  "192.168.1.101",
+  "192.168.1.102",
+  "192.168.1.103"
+]
+
+worker_ips = [
+  "192.168.1.111",
+  "192.168.1.112"
+]
+
+gateway     = "192.168.1.1"
+netmask     = "255.255.255.0"
+dns_servers = ["192.168.1.1", "8.8.8.8"]
+
+# -----------------------------------------------------------------------------
+# VM Template
+# -----------------------------------------------------------------------------
+# This should be an Ubuntu 22.04 (or later) template with cloud-init installed
+vm_template = "ubuntu-22.04-cloud-init"
+
+# -----------------------------------------------------------------------------
+# SSH Keys
+# -----------------------------------------------------------------------------
+ssh_public_key_path  = "~/.ssh/id_rsa.pub"
+ssh_private_key_path = "~/.ssh/id_rsa"

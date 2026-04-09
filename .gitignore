@@ -1,0 +1,30 @@
+# Terraform files
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+!terraform.tfvars.example
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Sensitive files (never commit these)
+*.pem
+*.key
+credentials
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/

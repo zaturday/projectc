@@ -1,0 +1,119 @@
+#cloud-config
+# =============================================================================
+# Cloud-Init Configuration for Kubernetes Control Plane Node
+# =============================================================================
+
+hostname: ${hostname}
+preserve_hostname: true
+
+fqdn: ${hostname}.${cluster_domain}
+
+# -----------------------------------------------------------------------------
+# Users and SSH Access
+# -----------------------------------------------------------------------------
+users:
+  - name: ubuntu
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${ssh_public_key}
+    lock_passwd: true
+
+# -----------------------------------------------------------------------------
+# Package Installation
+# -----------------------------------------------------------------------------
+packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg
+  - lsb-release
+  - software-properties-common
+
+# -----------------------------------------------------------------------------
+# System Configuration
+# -----------------------------------------------------------------------------
+write_files:
+  # Disable swap
+  - path: /etc/sysctl.d/99-kubernetes.conf
+    content: |
+      net.bridge.bridge-nf-call-iptables=1
+      net.ipv4.ip_forward=1
+      net.ipv6.conf.all.forwarding=1
+    permissions: "0644"
+
+  # Containerd configuration
+  - path: /etc/modules-load.d/containerd.conf
+    content: |
+      overlay
+      br_netfilter
+    permissions: "0644"
+
+  # Containerd config.toml
+  - path: /etc/containerd/config.toml
+    content: |
+      [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+        runtime_type = "io.containerd.runc.v2"
+      [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+        SystemdCgroup = true
+    permissions: "0644"
+
+# -----------------------------------------------------------------------------
+# Boot Commands
+# -----------------------------------------------------------------------------
+bootcmd:
+  - echo "Disabling swap..."
+  - swapoff -a
+  - sed -i '/ swap / s/^/#/' /etc/fstab
+
+# -----------------------------------------------------------------------------
+# Cloud-Init Commands
+# -----------------------------------------------------------------------------
+runcmd:
+  # Load kernel modules
+  - modprobe overlay
+  - modprobe br_netfilter
+
+  # Apply sysctl settings
+  - sysctl --system
+
+  # Install containerd
+  - apt-get update
+  - apt-get install -y containerd
+  - mkdir -p /etc/containerd
+  - containerd config default > /etc/containerd/config.toml.default || true
+  - systemctl restart containerd
+  - systemctl enable containerd
+
+  # Install Kubernetes components
+  - curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  - echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
+  - apt-get update
+  - apt-get install -y kubelet kubeadm kubectl
+  - apt-mark hold kubelet kubeadm kubectl
+
+  # Configure kubeadm ignore errors
+  - echo 'KUBELET_EXTRA_ARGS="--fail-swap-on=false"' > /etc/default/kubelet
+  - systemctl daemon-reload
+  - systemctl restart kubelet
+
+  # Initialize cluster on first control plane node
+  %{ if is_first_cp }
+  - kubeadm init --pod-network-cidr=${pod_cidr} --service-cidr=${service_cidr} --control-plane-endpoint=${control_plane_ip} --upload-certs
+  - mkdir -p /home/ubuntu/.kube
+  - cp -i /etc/kubernetes/admin.conf /home/ubuntu/.kube/config
+  - chown ubuntu:ubuntu /home/ubuntu/.kube/config
+  - echo "export KUBECONFIG=/etc/kubernetes/admin.conf" >> /home/ubuntu/.bashrc
+  %{ endif }
+
+  # Join command for additional control plane nodes (manually executed)
+  %{ if !is_first_cp }
+  - echo "# After first CP is ready, run this join command:" > /home/ubuntu/join-command.txt
+  - echo "# kubeadm join ${control_plane_ip}:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash> --control-plane --certificate-key <key>" >> /home/ubuntu/join-command.txt
+  - chmod 600 /home/ubuntu/join-command.txt
+  %{ endif }
+
+# -----------------------------------------------------------------------------
+# Final Output
+# -----------------------------------------------------------------------------
+final_message: "Control plane node $hostname is ready!"
