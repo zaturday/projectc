@@ -18,7 +18,7 @@ variable "vm_name_prefix" {
   type        = string
 }
 
-variable "count" {
+variable "vm_count" {
   description = "Number of VMs to create"
   type        = number
   default     = 1
@@ -99,7 +99,7 @@ variable "cloudinit_config" {
 # Cloud-init Config Drive
 # -----------------------------------------------------------------------------
 data "cloudinit_config" "vm" {
-  count = var.count
+  count = var.vm_count
 
   gzip          = false
   base64_encode = false
@@ -114,7 +114,7 @@ data "cloudinit_config" "vm" {
 # VM Resource
 # -----------------------------------------------------------------------------
 resource "vsphere_virtual_machine" "vm" {
-  count = var.count
+  count = var.vm_count
 
   name             = "${var.vm_name_prefix}-${count.index + 1}"
   resource_pool_id = var.cluster_id
